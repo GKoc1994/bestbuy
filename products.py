@@ -17,6 +17,27 @@ class Product:
         self.price = price
         self.quantity = quantity
         self.active = True
+        self.promotion = None
+
+    @property
+    def price(self):
+        """The price of one item."""
+        return self._price
+
+    @price.setter
+    def price(self, price):
+        """Set the price. Raise ValueError if it is negative."""
+        if not isinstance(price, (int, float)) or price < 0:
+            raise ValueError("Price cannot be negative.")
+        self._price = price
+
+    def __gt__(self, other):
+        """Return True if this product is more expensive than `other`."""
+        return self.price > other.price
+
+    def __lt__(self, other):
+        """Return True if this product is cheaper than `other`."""
+        return self.price < other.price
 
     def get_quantity(self):
         """Return the quantity in stock."""
@@ -29,6 +50,18 @@ class Product:
         self.quantity = quantity
         if self.quantity == 0:
             self.deactivate()
+
+    def get_promotion(self):
+        """Return the current promotion, or None."""
+        return self.promotion
+
+    def set_promotion(self, promotion):
+        """Set the current promotion. Use None to remove it."""
+        self.promotion = promotion
+
+    def get_promotion_name(self):
+        """Return the name of the current promotion, or 'None'."""
+        return self.promotion.name if self.promotion else "None"
 
     def is_active(self):
         """Return True if the product is active."""
@@ -45,7 +78,8 @@ class Product:
     def __str__(self):
         """Return a string that describes the product."""
         return (f"{self.name}, Price: ${self.price}, "
-                f"Quantity: {self.quantity}")
+                f"Quantity: {self.quantity}, "
+                f"Promotion: {self.get_promotion_name()}")
 
     def show(self):
         """Print a string that represents the product."""
@@ -60,6 +94,12 @@ class Product:
         if quantity > self.quantity:
             raise ValueError("Quantity larger than what exists")
 
+    def get_total_price(self, quantity):
+        """Return the price for `quantity` items, using the promotion."""
+        if self.promotion:
+            return self.promotion.apply_promotion(self, quantity)
+        return self.price * quantity
+
     def buy(self, quantity):
         """Buy the given quantity and return the total price.
 
@@ -67,7 +107,7 @@ class Product:
         inactive or there is not enough in stock.
         """
         self.validate_purchase(quantity)
-        total_price = self.price * quantity
+        total_price = self.get_total_price(quantity)
         self.set_quantity(self.quantity - quantity)
         return total_price
 
@@ -92,11 +132,12 @@ class NonStockedProduct(Product):
     def buy(self, quantity):
         """Buy any amount and return the total price."""
         self.validate_purchase(quantity)
-        return self.price * quantity
+        return self.get_total_price(quantity)
 
     def __str__(self):
         """Return a string that describes the product."""
-        return f"{self.name}, Price: ${self.price}, Quantity: Unlimited"
+        return (f"{self.name}, Price: ${self.price}, Quantity: Unlimited, "
+                f"Promotion: {self.get_promotion_name()}")
 
 
 class LimitedProduct(Product):
@@ -119,4 +160,5 @@ class LimitedProduct(Product):
     def __str__(self):
         """Return a string that describes the product."""
         return (f"{self.name}, Price: ${self.price}, "
-                f"Limited to {self.maximum} per order!")
+                f"Limited to {self.maximum} per order!, "
+                f"Promotion: {self.get_promotion_name()}")

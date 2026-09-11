@@ -8,6 +8,15 @@ class Store:
         """Create a store with the given list of products."""
         self.products = list(products)
 
+    def __contains__(self, product):
+        """Return True if the product is sold in this store."""
+        return product in self.products
+
+    def __add__(self, other):
+        """Return a new store with the products of both stores."""
+        return Store(self.products + [product for product in other.products
+                                      if product not in self.products])
+
     def add_product(self, product):
         """Add a product to the store."""
         self.products.append(product)
