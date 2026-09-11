@@ -1,4 +1,4 @@
-"""Product class for the Best Buy store."""
+"""Product classes for the Best Buy store."""
 
 
 class Product:
@@ -44,18 +44,15 @@ class Product:
 
     def __str__(self):
         """Return a string that describes the product."""
-        return f"{self.name}, Price: ${self.price}, Quantity: {self.quantity}"
+        return (f"{self.name}, Price: ${self.price}, "
+                f"Quantity: {self.quantity}")
 
     def show(self):
         """Print a string that represents the product."""
         print(self)
 
-    def buy(self, quantity):
-        """Buy the given quantity and return the total price.
-
-        Raise an exception if the quantity is invalid, the product is
-        inactive or there is not enough in stock.
-        """
+    def validate_purchase(self, quantity):
+        """Raise ValueError if the given quantity cannot be bought."""
         if not isinstance(quantity, int) or quantity <= 0:
             raise ValueError("Invalid Quantity")
         if not self.active:
@@ -63,6 +60,63 @@ class Product:
         if quantity > self.quantity:
             raise ValueError("Quantity larger than what exists")
 
+    def buy(self, quantity):
+        """Buy the given quantity and return the total price.
+
+        Raise ValueError if the quantity is invalid, the product is
+        inactive or there is not enough in stock.
+        """
+        self.validate_purchase(quantity)
         total_price = self.price * quantity
         self.set_quantity(self.quantity - quantity)
         return total_price
+
+
+class NonStockedProduct(Product):
+    """A product that is not physical, so its quantity is not tracked."""
+
+    def __init__(self, name, price):
+        """Create a non stocked product. Its quantity is always 0."""
+        super().__init__(name, price, quantity=0)
+
+    def set_quantity(self, quantity):
+        """Keep the quantity at 0, a non stocked product has no stock."""
+
+    def validate_purchase(self, quantity):
+        """Raise ValueError if the quantity is invalid or it is inactive."""
+        if not isinstance(quantity, int) or quantity <= 0:
+            raise ValueError("Invalid Quantity")
+        if not self.active:
+            raise ValueError("Product Inactive")
+
+    def buy(self, quantity):
+        """Buy any amount and return the total price."""
+        self.validate_purchase(quantity)
+        return self.price * quantity
+
+    def __str__(self):
+        """Return a string that describes the product."""
+        return f"{self.name}, Price: ${self.price}, Quantity: Unlimited"
+
+
+class LimitedProduct(Product):
+    """A product that can only be bought a limited amount per order."""
+
+    def __init__(self, name, price, quantity, maximum):
+        """Create a product that allows at most `maximum` items per order."""
+        super().__init__(name, price, quantity)
+        if not isinstance(maximum, int) or maximum < 1:
+            raise ValueError("Maximum must be a positive whole number.")
+        self.maximum = maximum
+
+    def validate_purchase(self, quantity):
+        """Also refuse orders that are larger than the allowed maximum."""
+        super().validate_purchase(quantity)
+        if quantity > self.maximum:
+            raise ValueError(
+                f"Only {self.maximum} is allowed from this product!")
+
+    def __str__(self):
+        """Return a string that describes the product."""
+        return (f"{self.name}, Price: ${self.price}, "
+                f"Limited to {self.maximum} per order!")

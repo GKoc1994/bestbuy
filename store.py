@@ -40,10 +40,7 @@ class Store:
             requested[product] = requested.get(product, 0) + quantity
 
         for product, quantity in requested.items():
-            if not product.is_active():
-                raise ValueError("Product Inactive")
-            if quantity > product.get_quantity():
-                raise ValueError("Quantity larger than what exists")
+            product.validate_purchase(quantity)
 
         return sum(product.buy(quantity)
                    for product, quantity in shopping_list)
